@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Coal HPB & Selling Price Calculator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell no-print">
+    <header class="page-header">
+      <h1>Coal HPB & Selling Price Calculator</h1>
+      <p class="page-subtitle">
+        Manual input version – HBA & Index values entered by user
+      </p>
+    </header>
+
+    <main class="layout-grid">
+      <section class="panel">
+        <div class="panel-header">
+          <h2>1. Coal Quality</h2>
+          <p>Input actual cargo quality (ARB basis)</p>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="gcv">GCV (ARB)</label>
+            <input id="gcv" type="number" step="any" placeholder="e.g. 5600" oninput="updateHpbInputSection()" />
+          </div>
+
+          <div class="field">
+            <label for="tm">Total Moisture – TM (%)</label>
+            <input id="tm" type="number" step="any" placeholder="e.g. 28" />
+          </div>
+
+          <div class="field">
+            <label for="ts">Total Sulphur – TS (%)</label>
+            <input id="ts" type="number" step="any" placeholder="e.g. 0.8" />
+          </div>
+
+          <div class="field">
+            <label for="ash">Ash (%)</label>
+            <input id="ash" type="number" step="any" placeholder="e.g. 6" />
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>2. HPB Calculation</h2>
+          <p>HBA input will adjust based on GCV & selected mode</p>
+        </div>
+
+        <div class="form-grid">
+          <div class="field full-width">
+            <label for="hpbMode">HPB Mode</label>
+            <select id="hpbMode" onchange="updateHpbInputSection()">
+              <option value="NORMAL">Normal (Based on GCV)</option>
+              <option value="CAP70">CAP 70</option>
+              <option value="CAP90">CAP 90</option>
+            </select>
+          </div>
+
+          <div class="info-card full-width">
+            <span class="info-label">Applied Formula</span>
+            <strong id="detectedHpbRule">-</strong>
+          </div>
+
+          <div id="hpbNormalSection" class="hidden full-width">
+            <div class="field">
+              <label id="normalHbaLabel" for="normalHbaValue">HBA</label>
+              <input id="normalHbaValue" type="number" step="any" placeholder="Enter HBA value (USD)" />
+            </div>
+          </div>
+
+          <div id="hpbCap70Section" class="hidden full-width">
+            <div class="field">
+              <label for="hbaCap70">HBA CAP 70 (USD)</label>
+              <input id="hbaCap70" type="number" step="any" value="70" />
+            </div>
+          </div>
+
+          <div id="hpbCap90Section" class="hidden full-width">
+            <div class="field">
+              <label for="hbaCap90">HBA CAP 90 (USD)</label>
+              <input id="hbaCap90" type="number" step="any" value="90" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel panel-wide">
+        <div class="panel-header">
+          <h2>3. Selling Price</h2>
+          <p>Select pricing structure and input index values</p>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="pricingType">Pricing Type</label>
+            <select id="pricingType" onchange="togglePricingSections()">
+              <option value="SINGLE_INDEX">Single Index</option>
+              <option value="BLENDED_2_INDEX">Blended 2 Index</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="contractGcv">Typical Contract GCV (GAR)</label>
+            <input id="contractGcv" type="number" step="any" placeholder="e.g. 5600" />
+          </div>
+        </div>
+
+        <div id="singleIndexSection" class="section-block">
+          <div class="section-title-row">
+            <h3>Single Index Formula</h3>
+            <span class="tag">Manual Input</span>
+          </div>
+
+          <div class="form-grid">
+            <div class="field">
+              <label for="singleIndexName">Index</label>
+              <select id="singleIndexName" onchange="updateSingleIndexLabel()">
+                <option value="NEWC">NEWC</option>
+                <option value="ICI1">ICI 1</option>
+                <option value="ICI2">ICI 2</option>
+                <option value="ICI3">ICI 3</option>
+                <option value="ICI4">ICI 4</option>
+                <option value="ICI5">ICI 5</option>
+                <option value="M42">M42</option>
+                <option value="M50">M50</option>
+                <option value="M58">M58</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label id="singleIndexValueLabel" for="singleIndexValue">NEWC Value</label>
+              <input id="singleIndexValue" type="number" step="any" placeholder="e.g. 85" />
+            </div>
+
+            <div class="field">
+              <label for="singlePremDiscType">Prem / Disc Type</label>
+              <select id="singlePremDiscType">
+                <option value="PREMIUM">Premium (+)</option>
+                <option value="DISCOUNT">Discount (-)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="singlePremDiscValue">Prem / Disc Value (USD)</label>
+              <input id="singlePremDiscValue" type="number" step="any" placeholder="e.g. 2.0" />
+            </div>
+
+            <div class="field full-width">
+              <label for="singlePremDiscPosition">Prem / Disc Position</label>
+              <select id="singlePremDiscPosition">
+                <option value="BEFORE_PRORATE">Before Prorate</option>
+                <option value="AFTER_PRORATE">After Prorate</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div id="blendedIndexSection" class="section-block hidden">
+          <div class="section-title-row">
+            <h3>Blended Index Formula</h3>
+            <span class="tag">Manual Input</span>
+          </div>
+
+          <div class="form-grid">
+            <div class="field full-width">
+              <label for="blendedPremDiscPosition">Prem / Disc Position</label>
+              <select id="blendedPremDiscPosition">
+                <option value="BEFORE_PRORATE">Before Prorate</option>
+                <option value="AFTER_PRORATE">After Prorate</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="blend-grid">
+            <div class="subpanel">
+              <h4>Leg 1</h4>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="leg1Weight">Weight (%)</label>
+                  <input id="leg1Weight" type="number" step="any" placeholder="e.g. 75" />
+                </div>
+
+                <div class="field">
+                  <label for="leg1Index">Index</label>
+                  <select id="leg1Index" onchange="updateBlendedIndexLabels()">
+                    <option value="ICI2">ICI 2</option>
+                    <option value="ICI3">ICI 3</option>
+                    <option value="NEWC">NEWC</option>
+                    <option value="ICI1">ICI 1</option>
+                    <option value="ICI4">ICI 4</option>
+                    <option value="ICI5">ICI 5</option>
+                    <option value="M42">M42</option>
+                    <option value="M50">M50</option>
+                    <option value="M58">M58</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label id="leg1ValueLabel" for="leg1Value">ICI 2 Value</label>
+                  <input id="leg1Value" type="number" step="any" placeholder="e.g. 80" />
+                </div>
+
+                <div class="field">
+                  <label for="leg1PremDiscType">Prem / Disc Type</label>
+                  <select id="leg1PremDiscType">
+                    <option value="PREMIUM">Premium (+)</option>
+                    <option value="DISCOUNT">Discount (-)</option>
+                  </select>
+                </div>
+
+                <div class="field full-width">
+                  <label for="leg1PremDiscValue">Prem / Disc Value (USD)</label>
+                  <input id="leg1PremDiscValue" type="number" step="any" placeholder="e.g. 7.5" />
+                </div>
+              </div>
+            </div>
+
+            <div class="subpanel">
+              <h4>Leg 2</h4>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="leg2Weight">Weight (%)</label>
+                  <input id="leg2Weight" type="number" step="any" placeholder="e.g. 25" />
+                </div>
+
+                <div class="field">
+                  <label for="leg2Index">Index</label>
+                  <select id="leg2Index" onchange="updateBlendedIndexLabels()">
+                    <option value="ICI3">ICI 3</option>
+                    <option value="ICI2">ICI 2</option>
+                    <option value="NEWC">NEWC</option>
+                    <option value="ICI1">ICI 1</option>
+                    <option value="ICI4">ICI 4</option>
+                    <option value="ICI5">ICI 5</option>
+                    <option value="M42">M42</option>
+                    <option value="M50">M50</option>
+                    <option value="M58">M58</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label id="leg2ValueLabel" for="leg2Value">ICI 3 Value</label>
+                  <input id="leg2Value" type="number" step="any" placeholder="e.g. 75" />
+                </div>
+
+                <div class="field">
+                  <label for="leg2PremDiscType">Prem / Disc Type</label>
+                  <select id="leg2PremDiscType">
+                    <option value="PREMIUM">Premium (+)</option>
+                    <option value="DISCOUNT">Discount (-)</option>
+                  </select>
+                </div>
+
+                <div class="field full-width">
+                  <label for="leg2PremDiscValue">Prem / Disc Value (USD)</label>
+                  <input id="leg2PremDiscValue" type="number" step="any" placeholder="e.g. 5" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="primary-btn" onclick="calculate()">Calculate</button>
+          <button class="secondary-btn" onclick="exportToPDF()">Export Result to PDF</button>
+        </div>
+      </section>
+
+      <section class="panel panel-wide">
+        <div class="panel-header">
+          <h2>Result</h2>
+          <p>Review formula path and outputs</p>
+        </div>
+
+        <div class="result-grid">
+          <div class="result-card">
+            <h3>HPB</h3>
+            <div class="result-item">
+              <span>Selected HPB Formula</span>
+              <strong id="selectedFormula">-</strong>
+            </div>
+            <div class="result-item highlight">
+              <span>HPB</span>
+              <strong id="result">-</strong>
+            </div>
+          </div>
+
+          <div class="result-card">
+            <h3>Selling Price</h3>
+            <div class="result-item">
+              <span>Pricing Mode</span>
+              <strong id="pricingModeResult">-</strong>
+            </div>
+            <div class="result-item">
+              <span>Typical Contract GCV</span>
+              <strong id="typicalContractGcvResult">-</strong>
+            </div>
+            <div class="result-item formula-box">
+              <span>Base Price Formula</span>
+              <strong id="basePriceFormula">-</strong>
+            </div>
+            <div class="result-item">
+              <span>Base Price</span>
+              <strong id="basePriceResult">-</strong>
+            </div>
+            <div class="result-item formula-box">
+              <span>Adj Price Formula</span>
+              <strong id="adjPriceFormula">-</strong>
+            </div>
+            <div class="result-item highlight">
+              <span>Adj Price</span>
+              <strong id="adjPriceResult">-</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Print/PDF layout -->
+  <div id="pdfReport" class="print-only">
+    <div class="pdf-page">
+      <div class="pdf-header">
+        <h1>Coal HPB & Selling Price Calculation Result</h1>
+        <p id="pdfTimestamp">-</p>
+      </div>
+
+      <div class="pdf-section">
+        <h2>Coal Quality</h2>
+        <table class="pdf-table">
+          <tr><td>GCV (ARB)</td><td id="pdfGcv">-</td></tr>
+          <tr><td>Total Moisture – TM (%)</td><td id="pdfTm">-</td></tr>
+          <tr><td>Total Sulphur – TS (%)</td><td id="pdfTs">-</td></tr>
+          <tr><td>Ash (%)</td><td id="pdfAsh">-</td></tr>
+        </table>
+      </div>
+
+      <div class="pdf-section">
+        <h2>HPB Result</h2>
+        <table class="pdf-table">
+          <tr><td>Selected HPB Formula</td><td id="pdfSelectedFormula">-</td></tr>
+          <tr><td>HPB</td><td id="pdfHpb">-</td></tr>
+        </table>
+      </div>
+
+      <div class="pdf-section">
+        <h2>Selling Price Result</h2>
+        <table class="pdf-table">
+          <tr><td>Pricing Mode</td><td id="pdfPricingMode">-</td></tr>
+          <tr><td>Typical Contract GCV</td><td id="pdfTypicalContractGcv">-</td></tr>
+          <tr><td>Base Price Formula</td><td id="pdfBaseFormula">-</td></tr>
+          <tr><td>Base Price</td><td id="pdfBasePrice">-</td></tr>
+          <tr><td>Adj Price Formula</td><td id="pdfAdjFormula">-</td></tr>
+          <tr><td>Adj Price</td><td id="pdfAdjPrice">-</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
