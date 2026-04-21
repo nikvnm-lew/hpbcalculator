@@ -110,15 +110,15 @@ function detectNormalHbaRule(gcv) {
   if (!gcv || gcv <= 0) return { formula: "-", label: "HBA" };
 
   if (gcv > 6000) {
-    return { formula: "Price_6000", label: "HBA" };
+    return { formula: "HPB_6000", label: "HBA" };
   } else if (gcv >= 5300) {
-    return { formula: "Price_5300", label: "HBA I" };
+    return { formula: "HPB_5300", label: "HBA I" };
   } else if (gcv > 4100) {
-    return { formula: "Price_4100", label: "HBA II" };
+    return { formula: "HPB_4100", label: "HBA II" };
   } else if (gcv > 3400) {
-    return { formula: "Price_3400", label: "HBA III" };
+    return { formula: "HPB_3400", label: "HBA III" };
   } else {
-    return { formula: "Price_Sub3400", label: "HBA III" };
+    return { formula: "HPB_Sub3400", label: "HBA III" };
   }
 }
 
@@ -138,10 +138,10 @@ function updateHpbInputSection() {
 
   if (hpbMode === "CAP70") {
     cap70Section.classList.remove("hidden");
-    detectedRule.innerText = "Price_CAP (HBA CAP 70)";
+    detectedRule.innerText = "HPB_CAP 70";
   } else if (hpbMode === "CAP90") {
     cap90Section.classList.remove("hidden");
-    detectedRule.innerText = "Price_CAP (HBA CAP 90)";
+    detectedRule.innerText = "HPB_CAP 90";
   } else {
     const rule = detectNormalHbaRule(gcv);
     normalSection.classList.remove("hidden");
@@ -151,15 +151,15 @@ function updateHpbInputSection() {
 }
 
 function applyReferenceDisplay(data) {
-  document.getElementById("displayHba").innerText = formatUSD(data.hba);
-  document.getElementById("displayHba1").innerText = formatUSD(data.hba1);
-  document.getElementById("displayHba2").innerText = formatUSD(data.hba2);
-  document.getElementById("displayHba3").innerText = formatUSD(data.hba3);
+  const hbaText = formatUSD(data.hba);
+  const hba1Text = formatUSD(data.hba1);
+  const hba2Text = formatUSD(data.hba2);
+  const hba3Text = formatUSD(data.hba3);
 
-  document.getElementById("latestHbaInfo").innerText =
-    `HBA ${data.hba} | HBA I ${data.hba1} | HBA II ${data.hba2} | HBA III ${data.hba3}`;
-  document.getElementById("latestHbaPeriod").innerText =
-    `Period: ${data.period || "-"}`;
+  document.getElementById("displayHbaRight").innerText = hbaText;
+  document.getElementById("displayHba1Right").innerText = hba1Text;
+  document.getElementById("displayHba2Right").innerText = hba2Text;
+  document.getElementById("displayHba3Right").innerText = hba3Text;
 
   document.getElementById("latestHbaPeriodDisplay").innerText =
     `Period: ${data.period || "-"}`;
@@ -173,11 +173,11 @@ function applyReferenceValuesToCalculator(data) {
   const rule = detectNormalHbaRule(gcv);
 
   if (mode === "NORMAL") {
-    if (rule.formula === "Price_6000") {
+    if (rule.formula === "HPB_6000") {
       document.getElementById("normalHbaValue").value = data.hba ?? "";
-    } else if (rule.formula === "Price_5300") {
+    } else if (rule.formula === "HPB_5300") {
       document.getElementById("normalHbaValue").value = data.hba1 ?? "";
-    } else if (rule.formula === "Price_4100") {
+    } else if (rule.formula === "HPB_4100") {
       document.getElementById("normalHbaValue").value = data.hba2 ?? "";
     } else {
       document.getElementById("normalHbaValue").value = data.hba3 ?? "";
@@ -212,92 +212,16 @@ function applyManualReferenceToCalculator() {
 }
 
 async function fetchHBAFromMinerba() {
-  const url = "https://www.minerba.esdm.go.id/harga_acuan";
-
   const statusEl = document.getElementById("minerbaStatus");
   const periodDisplayEl = document.getElementById("latestHbaPeriodDisplay");
 
-  statusEl.innerText = "Loading...";
-  periodDisplayEl.innerText = "Period: -";
+  statusEl.innerText = "Failed to load directly from Minerba";
+  periodDisplayEl.innerText = "Period: unavailable";
 
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const html = await response.text();
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    const pageText = doc.body.innerText.replace(/\s+/g, " ").trim();
-
-    function extractPeriods() {
-      const match = pageText.match(/Komoditas\s+(.+?)\s+Batubara \(USD\/ton\)/);
-      if (!match) return [];
-
-      const raw = match[1];
-      const periodRegex = /(Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember)\s+\d{4}\s+\(Periode\s+(Pertama|Kedua)\)/g;
-
-      const periods = [];
-      let m;
-      while ((m = periodRegex.exec(raw)) !== null) {
-        periods.push(m[0]);
-      }
-      return periods;
-    }
-
-    function extractSeries(label) {
-      const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const regex = new RegExp(`${escaped}\\s+([\\d.\\s]+?)(?=\\s+[A-Za-z].*\\(|$)`);
-      const match = pageText.match(regex);
-
-      if (!match) return [];
-
-      return match[1]
-        .trim()
-        .split(/\s+/)
-        .map(v => Number(v))
-        .filter(v => !Number.isNaN(v));
-    }
-
-    const periods = extractPeriods();
-    const hba = extractSeries("Batubara (USD/ton)");
-    const hba1 = extractSeries("Batubara (hba 1) (USD/ton)");
-    const hba2 = extractSeries("Batubara (hba 2) (USD/ton)");
-    const hba3 = extractSeries("Batubara (hba 3) (USD/ton)");
-
-    if (!periods.length || !hba.length || !hba1.length || !hba2.length || !hba3.length) {
-      throw new Error("HBA rows or periods not found.");
-    }
-
-    const latest = {
-      period: periods[periods.length - 1],
-      hba: hba[hba.length - 1],
-      hba1: hba1[hba1.length - 1],
-      hba2: hba2[hba2.length - 1],
-      hba3: hba3[hba3.length - 1]
-    };
-
-    window.latestMinerbaHBA = latest;
-
-    statusEl.innerText = "Loaded successfully";
-    periodDisplayEl.innerText = `Period: ${latest.period}`;
-
-    applyReferenceDisplay(latest);
-    applyReferenceValuesToCalculator(latest);
-  } catch (error) {
-    console.error("Failed to fetch HBA from Minerba:", error);
-
-    statusEl.innerText = "Failed to load directly from Minerba";
-    periodDisplayEl.innerText = "Period: unavailable";
-
-    document.getElementById("displayHba").innerText = "-";
-    document.getElementById("displayHba1").innerText = "-";
-    document.getElementById("displayHba2").innerText = "-";
-    document.getElementById("displayHba3").innerText = "-";
-
-    document.getElementById("latestHbaInfo").innerText = "Not loaded";
-    document.getElementById("latestHbaPeriod").innerText = "Period: -";
-  }
+  document.getElementById("displayHbaRight").innerText = "-";
+  document.getElementById("displayHba1Right").innerText = "-";
+  document.getElementById("displayHba2Right").innerText = "-";
+  document.getElementById("displayHba3Right").innerText = "-";
 }
 
 function convertPremDisc(type, value) {
@@ -438,28 +362,28 @@ function calculate() {
 
   if (hpbMode === "CAP70") {
     hpb = priceCAP(hbaCap70);
-    selectedFormula = "Price_CAP (HBA CAP 70)";
+    selectedFormula = "HPB_CAP 70";
   } else if (hpbMode === "CAP90") {
     hpb = priceCAP(hbaCap90);
-    selectedFormula = "Price_CAP (HBA CAP 90)";
+    selectedFormula = "HPB_CAP 90";
   } else {
     const rule = detectNormalHbaRule(gcv);
 
-    if (rule.formula === "Price_6000") {
+    if (rule.formula === "HPB_6000") {
       hpb = price6000(normalHbaValue);
-      selectedFormula = "Price_6000 (HBA)";
-    } else if (rule.formula === "Price_5300") {
+      selectedFormula = "HPB_6000 (HBA)";
+    } else if (rule.formula === "HPB_5300") {
       hpb = price5300(normalHbaValue);
-      selectedFormula = "Price_5300 (HBA I)";
-    } else if (rule.formula === "Price_4100") {
+      selectedFormula = "HPB_5300 (HBA I)";
+    } else if (rule.formula === "HPB_4100") {
       hpb = price4100(normalHbaValue);
-      selectedFormula = "Price_4100 (HBA II)";
+      selectedFormula = "HPB_4100 (HBA II)";
     } else if (rule.formula === "Price_3400") {
       hpb = price3400(normalHbaValue);
-      selectedFormula = "Price_3400 (HBA III)";
+      selectedFormula = "HPB_3400 (HBA III)";
     } else {
       hpb = priceSub3400(normalHbaValue);
-      selectedFormula = "Price_Sub3400 (HBA III)";
+      selectedFormula = "HPB_Sub3400 (HBA III)";
     }
   }
 
@@ -645,7 +569,7 @@ function exportToPDF() {
     document.getElementById("ash").value ? `${document.getElementById("ash").value} %` : "-";
 
   document.getElementById("pdfHbaPeriod").innerText =
-    window.latestMinerbaHBA?.period || "-";
+    window.latestMinerbaHBA?.period || document.getElementById("manualHbaPeriod").value || "-";
 
   document.getElementById("pdfSelectedFormula").innerText =
     document.getElementById("selectedFormula").innerText;

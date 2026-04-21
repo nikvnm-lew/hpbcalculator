@@ -11,7 +11,7 @@
     <header class="page-header">
       <h1>Coal HPB, Price & Royalty Calculator</h1>
       <p class="page-subtitle">
-        Manual input version – HBA & Index values entered by user
+        By MMS Marketing Support Team
       </p>
     </header>
 
@@ -47,7 +47,7 @@
         <div class="hba-reference-block">
           <div class="section-mini-header">
             <div>
-              <h3>Minerba HBA Reference</h3>
+              <h3>HBA Reference</h3>
               <p>Latest HBA values for reference</p>
             </div>
           </div>
@@ -56,8 +56,8 @@
             <div class="field">
               <label for="hbaReferenceMode">Reference Mode</label>
               <select id="hbaReferenceMode" onchange="toggleHbaReferenceMode()">
-                <option value="AUTO">Auto / Minerba</option>
                 <option value="MANUAL">Manual Input</option>
+                <option value="AUTO">Auto / Minerba</option>                
               </select>
             </div>
 
@@ -87,7 +87,7 @@
             <div class="form-grid">
               <div class="field full-width">
                 <label for="manualHbaPeriod">Manual Period</label>
-                <input id="manualHbaPeriod" type="text" placeholder="e.g. April 2026 (Periode Kedua)" />
+                <input id="manualHbaPeriod" type="text" placeholder="e.g. April Periode Kedua" />
               </div>
 
               <div class="field">
@@ -109,28 +109,6 @@
                 <label for="manualHba3">HBA III (USD)</label>
                 <input id="manualHba3" type="number" step="any" placeholder="e.g. 38.30" />
               </div>
-            </div>
-          </div>
-
-          <div class="compact-reference-grid">
-            <div class="compact-reference-card">
-              <span>HBA</span>
-              <strong id="displayHba">-</strong>
-            </div>
-
-            <div class="compact-reference-card">
-              <span>HBA I</span>
-              <strong id="displayHba1">-</strong>
-            </div>
-
-            <div class="compact-reference-card">
-              <span>HBA II</span>
-              <strong id="displayHba2">-</strong>
-            </div>
-
-            <div class="compact-reference-card">
-              <span>HBA III</span>
-              <strong id="displayHba3">-</strong>
             </div>
           </div>
         </div>
@@ -157,10 +135,26 @@
             <strong id="detectedHpbRule">-</strong>
           </div>
 
-          <div class="info-card full-width">
-            <span class="info-label">Latest HBA Reference Used</span>
-            <strong id="latestHbaInfo">Not loaded</strong>
-            <span class="info-label" id="latestHbaPeriod">Period: -</span>
+          <div class="hba-summary-inline full-width">
+            <div class="compact-reference-card">
+              <span>HBA</span>
+              <strong id="displayHbaRight">-</strong>
+            </div>
+
+            <div class="compact-reference-card">
+              <span>HBA I</span>
+              <strong id="displayHba1Right">-</strong>
+            </div>
+
+            <div class="compact-reference-card">
+              <span>HBA II</span>
+              <strong id="displayHba2Right">-</strong>
+            </div>
+
+            <div class="compact-reference-card">
+              <span>HBA III</span>
+              <strong id="displayHba3Right">-</strong>
+            </div>
           </div>
 
           <div class="field">
@@ -170,9 +164,9 @@
 
           <div class="field">
             <label for="permitType">Mining Permit Type</label>
-            <select id="permitType">
-              <option value="IUP_OP">IUP OP</option>
+            <select id="permitType">              
               <option value="IUPK">IUPK</option>
+              <option value="IUP_OP">IUP OP</option>
             </select>
           </div>
 
