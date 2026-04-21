@@ -32,7 +32,6 @@ function formatIndexLabel(indexName) {
 
 function formatUSD(value) {
   if (value === null || value === undefined || isNaN(value)) return "-";
-
   return `$ ${Number(value).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
@@ -41,24 +40,52 @@ function formatUSD(value) {
 
 function formatGar(value) {
   if (value === null || value === undefined || isNaN(value) || value === 0) return "-";
-
   return `${Number(value).toLocaleString("en-US", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
   })} GAR`;
 }
 
+function formatPercent(value) {
+  if (value === null || value === undefined || isNaN(value)) return "-";
+  return `${Number(value).toLocaleString("en-US", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1
+  })}%`;
+}
+
 function togglePricingSections() {
   const pricingType = document.getElementById("pricingType").value;
   const singleSection = document.getElementById("singleIndexSection");
   const blendedSection = document.getElementById("blendedIndexSection");
+  const fixedSection = document.getElementById("fixedPriceSection");
 
-  if (pricingType === "BLENDED_2_INDEX") {
-    singleSection.classList.add("hidden");
-    blendedSection.classList.remove("hidden");
-  } else {
+  singleSection.classList.add("hidden");
+  blendedSection.classList.add("hidden");
+  fixedSection.classList.add("hidden");
+
+  if (pricingType === "SINGLE_INDEX") {
     singleSection.classList.remove("hidden");
-    blendedSection.classList.add("hidden");
+  } else if (pricingType === "BLENDED_2_INDEX") {
+    blendedSection.classList.remove("hidden");
+  } else if (pricingType === "FIXED_PRICE") {
+    fixedSection.classList.remove("hidden");
+  }
+}
+
+function toggleHbaReferenceMode() {
+  const mode = document.getElementById("hbaReferenceMode").value;
+  const manualSection = document.getElementById("manualReferenceSection");
+  const autoActions = document.getElementById("autoReferenceActions");
+
+  if (mode === "MANUAL") {
+    manualSection.classList.remove("hidden");
+    autoActions.classList.add("hidden");
+    document.getElementById("minerbaStatus").innerText = "Manual mode";
+  } else {
+    manualSection.classList.add("hidden");
+    autoActions.classList.remove("hidden");
+    document.getElementById("minerbaStatus").innerText = "Not loaded";
   }
 }
 
@@ -123,17 +150,206 @@ function updateHpbInputSection() {
   }
 }
 
+function applyReferenceDisplay(data) {
+  document.getElementById("displayHba").innerText = formatUSD(data.hba);
+  document.getElementById("displayHba1").innerText = formatUSD(data.hba1);
+  document.getElementById("displayHba2").innerText = formatUSD(data.hba2);
+  document.getElementById("displayHba3").innerText = formatUSD(data.hba3);
+
+  document.getElementById("latestHbaInfo").innerText =
+    `HBA ${data.hba} | HBA I ${data.hba1} | HBA II ${data.hba2} | HBA III ${data.hba3}`;
+  document.getElementById("latestHbaPeriod").innerText =
+    `Period: ${data.period || "-"}`;
+
+  document.getElementById("latestHbaPeriodDisplay").innerText =
+    `Period: ${data.period || "-"}`;
+}
+
+function applyReferenceValuesToCalculator(data) {
+  document.getElementById("hba0Value").value = data.hba ?? "";
+
+  const mode = document.getElementById("hpbMode").value;
+  const gcv = parseFloat(document.getElementById("gcv").value) || 0;
+  const rule = detectNormalHbaRule(gcv);
+
+  if (mode === "NORMAL") {
+    if (rule.formula === "Price_6000") {
+      document.getElementById("normalHbaValue").value = data.hba ?? "";
+    } else if (rule.formula === "Price_5300") {
+      document.getElementById("normalHbaValue").value = data.hba1 ?? "";
+    } else if (rule.formula === "Price_4100") {
+      document.getElementById("normalHbaValue").value = data.hba2 ?? "";
+    } else {
+      document.getElementById("normalHbaValue").value = data.hba3 ?? "";
+    }
+  }
+}
+
+function applyManualReferenceToCalculator() {
+  const mode = document.getElementById("hbaReferenceMode").value;
+
+  if (mode !== "MANUAL") {
+    if (window.latestMinerbaHBA) {
+      applyReferenceValuesToCalculator(window.latestMinerbaHBA);
+      applyReferenceDisplay(window.latestMinerbaHBA);
+    }
+    return;
+  }
+
+  const manualData = {
+    period: document.getElementById("manualHbaPeriod").value || "-",
+    hba: parseFloat(document.getElementById("manualHba").value) || 0,
+    hba1: parseFloat(document.getElementById("manualHba1").value) || 0,
+    hba2: parseFloat(document.getElementById("manualHba2").value) || 0,
+    hba3: parseFloat(document.getElementById("manualHba3").value) || 0
+  };
+
+  window.latestMinerbaHBA = manualData;
+
+  document.getElementById("minerbaStatus").innerText = "Manual reference applied";
+  applyReferenceDisplay(manualData);
+  applyReferenceValuesToCalculator(manualData);
+}
+
+async function fetchHBAFromMinerba() {
+  const url = "https://www.minerba.esdm.go.id/harga_acuan";
+
+  const statusEl = document.getElementById("minerbaStatus");
+  const periodDisplayEl = document.getElementById("latestHbaPeriodDisplay");
+
+  statusEl.innerText = "Loading...";
+  periodDisplayEl.innerText = "Period: -";
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const html = await response.text();
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const pageText = doc.body.innerText.replace(/\s+/g, " ").trim();
+
+    function extractPeriods() {
+      const match = pageText.match(/Komoditas\s+(.+?)\s+Batubara \(USD\/ton\)/);
+      if (!match) return [];
+
+      const raw = match[1];
+      const periodRegex = /(Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember)\s+\d{4}\s+\(Periode\s+(Pertama|Kedua)\)/g;
+
+      const periods = [];
+      let m;
+      while ((m = periodRegex.exec(raw)) !== null) {
+        periods.push(m[0]);
+      }
+      return periods;
+    }
+
+    function extractSeries(label) {
+      const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(`${escaped}\\s+([\\d.\\s]+?)(?=\\s+[A-Za-z].*\\(|$)`);
+      const match = pageText.match(regex);
+
+      if (!match) return [];
+
+      return match[1]
+        .trim()
+        .split(/\s+/)
+        .map(v => Number(v))
+        .filter(v => !Number.isNaN(v));
+    }
+
+    const periods = extractPeriods();
+    const hba = extractSeries("Batubara (USD/ton)");
+    const hba1 = extractSeries("Batubara (hba 1) (USD/ton)");
+    const hba2 = extractSeries("Batubara (hba 2) (USD/ton)");
+    const hba3 = extractSeries("Batubara (hba 3) (USD/ton)");
+
+    if (!periods.length || !hba.length || !hba1.length || !hba2.length || !hba3.length) {
+      throw new Error("HBA rows or periods not found.");
+    }
+
+    const latest = {
+      period: periods[periods.length - 1],
+      hba: hba[hba.length - 1],
+      hba1: hba1[hba1.length - 1],
+      hba2: hba2[hba2.length - 1],
+      hba3: hba3[hba3.length - 1]
+    };
+
+    window.latestMinerbaHBA = latest;
+
+    statusEl.innerText = "Loaded successfully";
+    periodDisplayEl.innerText = `Period: ${latest.period}`;
+
+    applyReferenceDisplay(latest);
+    applyReferenceValuesToCalculator(latest);
+  } catch (error) {
+    console.error("Failed to fetch HBA from Minerba:", error);
+
+    statusEl.innerText = "Failed to load directly from Minerba";
+    periodDisplayEl.innerText = "Period: unavailable";
+
+    document.getElementById("displayHba").innerText = "-";
+    document.getElementById("displayHba1").innerText = "-";
+    document.getElementById("displayHba2").innerText = "-";
+    document.getElementById("displayHba3").innerText = "-";
+
+    document.getElementById("latestHbaInfo").innerText = "Not loaded";
+    document.getElementById("latestHbaPeriod").innerText = "Period: -";
+  }
+}
+
 function convertPremDisc(type, value) {
   return type === "DISCOUNT" ? -value : value;
 }
 
+function getRoyaltyRate({ permitType, hpbMode, hba0, gcv }) {
+  if (permitType === "IUPK") {
+    if (hpbMode === "CAP70" || hpbMode === "CAP90") return 14;
+
+    if (hba0 < 70) return 15;
+    if (hba0 < 120) return 18;
+    if (hba0 < 140) return 19;
+    if (hba0 < 160) return 22;
+    if (hba0 < 180) return 25;
+    return 28;
+  }
+
+  const isCap = hpbMode === "CAP70" || hpbMode === "CAP90";
+
+  if (gcv <= 4200) {
+    if (isCap) return 6;
+    if (hba0 < 70) return 5;
+    if (hba0 < 90) return 6;
+    return 9;
+  }
+
+  if (gcv < 5200) {
+    if (isCap) return 8.5;
+    if (hba0 < 70) return 7;
+    if (hba0 < 90) return 8.5;
+    return 11.5;
+  }
+
+  if (isCap) return 11.5;
+  if (hba0 < 70) return 9.5;
+  if (hba0 < 90) return 11.5;
+  return 13.5;
+}
+
 function calculate() {
   const hpbMode = document.getElementById("hpbMode").value;
+  const permitType = document.getElementById("permitType").value;
 
   const gcv = parseFloat(document.getElementById("gcv").value) || 0;
   const tm = parseFloat(document.getElementById("tm").value) || 0;
   const ts = parseFloat(document.getElementById("ts").value) || 0;
   const ash = parseFloat(document.getElementById("ash").value) || 0;
+
+  const hba0 = parseFloat(document.getElementById("hba0Value").value) || 0;
+  const transhipmentFreight =
+    parseFloat(document.getElementById("transhipmentFreight").value) || 0;
 
   const normalHbaValue = parseFloat(document.getElementById("normalHbaValue").value) || 0;
   const hbaCap70 = parseFloat(document.getElementById("hbaCap70").value) || 70;
@@ -357,13 +573,48 @@ function calculate() {
     };
   }
 
-  const sellingPriceResult =
-    pricingType === "BLENDED_2_INDEX"
-      ? calculateBlended2SellingPrice()
-      : calculateSingleIndexSellingPrice();
+  function calculateFixedPrice() {
+    const fixedBasePrice = parseFloat(document.getElementById("fixedBasePrice").value) || 0;
+
+    const adjPrice = contractGcv ? (fixedBasePrice * gcv / contractGcv) : 0;
+    const adjFormula = contractGcv
+      ? `${formatUSD(fixedBasePrice)} × ${gcv} / ${contractGcv}`
+      : "-";
+
+    return {
+      mode: "Fixed Price",
+      basePrice: fixedBasePrice,
+      adjPrice,
+      baseFormula: "Fixed Price Input",
+      adjFormula
+    };
+  }
+
+  let sellingPriceResult;
+
+  if (pricingType === "BLENDED_2_INDEX") {
+    sellingPriceResult = calculateBlended2SellingPrice();
+  } else if (pricingType === "FIXED_PRICE") {
+    sellingPriceResult = calculateFixedPrice();
+  } else {
+    sellingPriceResult = calculateSingleIndexSellingPrice();
+  }
+
+  const royaltyRate = getRoyaltyRate({
+    permitType,
+    hpbMode,
+    hba0,
+    gcv
+  });
+
+  const royaltyBase = Math.max(hpb, sellingPriceResult.adjPrice) - transhipmentFreight;
+  const royaltyValue = royaltyBase * (royaltyRate / 100);
 
   document.getElementById("selectedFormula").innerText = selectedFormula;
   document.getElementById("result").innerText = formatUSD(hpb);
+
+  document.getElementById("royaltyRateResult").innerText = formatPercent(royaltyRate);
+  document.getElementById("royaltyValueResult").innerText = formatUSD(royaltyValue);
 
   document.getElementById("pricingModeResult").innerText = sellingPriceResult.mode;
   document.getElementById("typicalContractGcvResult").innerText = formatGar(contractGcv);
@@ -393,11 +644,20 @@ function exportToPDF() {
   document.getElementById("pdfAsh").innerText =
     document.getElementById("ash").value ? `${document.getElementById("ash").value} %` : "-";
 
+  document.getElementById("pdfHbaPeriod").innerText =
+    window.latestMinerbaHBA?.period || "-";
+
   document.getElementById("pdfSelectedFormula").innerText =
     document.getElementById("selectedFormula").innerText;
 
   document.getElementById("pdfHpb").innerText =
     document.getElementById("result").innerText;
+
+  document.getElementById("pdfRoyaltyRate").innerText =
+    document.getElementById("royaltyRateResult").innerText;
+
+  document.getElementById("pdfRoyaltyValue").innerText =
+    document.getElementById("royaltyValueResult").innerText;
 
   document.getElementById("pdfPricingMode").innerText =
     document.getElementById("pricingModeResult").innerText;
@@ -422,6 +682,7 @@ function exportToPDF() {
 
 window.onload = function () {
   togglePricingSections();
+  toggleHbaReferenceMode();
   updateSingleIndexLabel();
   updateBlendedIndexLabels();
   updateHpbInputSection();

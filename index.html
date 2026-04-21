@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Coal HPB & Selling Price Calculator</title>
+  <title>Coal HPB, Price & Royalty Calculator</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="app-shell no-print">
     <header class="page-header">
-      <h1>Coal HPB & Selling Price Calculator</h1>
+      <h1>Coal HPB, Price & Royalty Calculator</h1>
       <p class="page-subtitle">
         Manual input version – HBA & Index values entered by user
       </p>
     </header>
 
     <main class="layout-grid">
-      <section class="panel">
+      <section class="panel quality-panel">
         <div class="panel-header">
           <h2>1. Coal Quality</h2>
           <p>Input actual cargo quality (ARB basis)</p>
@@ -43,12 +43,103 @@
             <input id="ash" type="number" step="any" placeholder="e.g. 6" />
           </div>
         </div>
+
+        <div class="hba-reference-block">
+          <div class="section-mini-header">
+            <div>
+              <h3>Minerba HBA Reference</h3>
+              <p>Latest HBA values for reference</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="field">
+              <label for="hbaReferenceMode">Reference Mode</label>
+              <select id="hbaReferenceMode" onchange="toggleHbaReferenceMode()">
+                <option value="AUTO">Auto / Minerba</option>
+                <option value="MANUAL">Manual Input</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>&nbsp;</label>
+              <button class="secondary-btn" type="button" onclick="applyManualReferenceToCalculator()">
+                Apply Reference to Calculator
+              </button>
+            </div>
+          </div>
+
+          <div class="minerba-status-card">
+            <div class="minerba-status-top">
+              <span class="mini-label">Source Status</span>
+              <strong id="minerbaStatus">Not loaded</strong>
+            </div>
+            <span class="mini-label" id="latestHbaPeriodDisplay">Period: -</span>
+          </div>
+
+          <div id="autoReferenceActions" class="reference-actions">
+            <button class="secondary-btn" type="button" onclick="fetchHBAFromMinerba()">
+              Auto Fill HBA from Minerba
+            </button>
+          </div>
+
+          <div id="manualReferenceSection" class="manual-reference hidden">
+            <div class="form-grid">
+              <div class="field full-width">
+                <label for="manualHbaPeriod">Manual Period</label>
+                <input id="manualHbaPeriod" type="text" placeholder="e.g. April 2026 (Periode Kedua)" />
+              </div>
+
+              <div class="field">
+                <label for="manualHba">HBA (USD)</label>
+                <input id="manualHba" type="number" step="any" placeholder="e.g. 103.43" />
+              </div>
+
+              <div class="field">
+                <label for="manualHba1">HBA I (USD)</label>
+                <input id="manualHba1" type="number" step="any" placeholder="e.g. 77.71" />
+              </div>
+
+              <div class="field">
+                <label for="manualHba2">HBA II (USD)</label>
+                <input id="manualHba2" type="number" step="any" placeholder="e.g. 52.84" />
+              </div>
+
+              <div class="field">
+                <label for="manualHba3">HBA III (USD)</label>
+                <input id="manualHba3" type="number" step="any" placeholder="e.g. 38.30" />
+              </div>
+            </div>
+          </div>
+
+          <div class="compact-reference-grid">
+            <div class="compact-reference-card">
+              <span>HBA</span>
+              <strong id="displayHba">-</strong>
+            </div>
+
+            <div class="compact-reference-card">
+              <span>HBA I</span>
+              <strong id="displayHba1">-</strong>
+            </div>
+
+            <div class="compact-reference-card">
+              <span>HBA II</span>
+              <strong id="displayHba2">-</strong>
+            </div>
+
+            <div class="compact-reference-card">
+              <span>HBA III</span>
+              <strong id="displayHba3">-</strong>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section class="panel">
         <div class="panel-header">
-          <h2>2. HPB Calculation</h2>
-          <p>HBA input will adjust based on GCV & selected mode</p>
+          <h2>2. HPB & Royalty Setup</h2>
+          <p>HBA input adjusts based on GCV & selected mode</p>
         </div>
 
         <div class="form-grid">
@@ -64,6 +155,30 @@
           <div class="info-card full-width">
             <span class="info-label">Applied Formula</span>
             <strong id="detectedHpbRule">-</strong>
+          </div>
+
+          <div class="info-card full-width">
+            <span class="info-label">Latest HBA Reference Used</span>
+            <strong id="latestHbaInfo">Not loaded</strong>
+            <span class="info-label" id="latestHbaPeriod">Period: -</span>
+          </div>
+
+          <div class="field">
+            <label for="hba0Value">HBA 0 (USD)</label>
+            <input id="hba0Value" type="number" step="any" placeholder="Enter HBA 0 value" />
+          </div>
+
+          <div class="field">
+            <label for="permitType">Mining Permit Type</label>
+            <select id="permitType">
+              <option value="IUP_OP">IUP OP</option>
+              <option value="IUPK">IUPK</option>
+            </select>
+          </div>
+
+          <div class="field full-width">
+            <label for="transhipmentFreight">Transhipment & Freight (USD)</label>
+            <input id="transhipmentFreight" type="number" step="any" value="6.5" />
           </div>
 
           <div id="hpbNormalSection" class="hidden full-width">
@@ -101,6 +216,7 @@
             <select id="pricingType" onchange="togglePricingSections()">
               <option value="SINGLE_INDEX">Single Index</option>
               <option value="BLENDED_2_INDEX">Blended 2 Index</option>
+              <option value="FIXED_PRICE">Fixed Price</option>
             </select>
           </div>
 
@@ -265,6 +381,20 @@
           </div>
         </div>
 
+        <div id="fixedPriceSection" class="section-block hidden">
+          <div class="section-title-row">
+            <h3>Fixed Price</h3>
+            <span class="tag">Manual Input</span>
+          </div>
+
+          <div class="form-grid">
+            <div class="field full-width">
+              <label for="fixedBasePrice">Base Price (USD)</label>
+              <input id="fixedBasePrice" type="number" step="any" placeholder="e.g. 98.50" />
+            </div>
+          </div>
+        </div>
+
         <div class="action-row">
           <button class="primary-btn" onclick="calculate()">Calculate</button>
           <button class="secondary-btn" onclick="exportToPDF()">Export Result to PDF</button>
@@ -279,39 +409,57 @@
 
         <div class="result-grid">
           <div class="result-card">
-            <h3>HPB</h3>
+            <h3>HPB & Royalty</h3>
+
             <div class="result-item">
               <span>Selected HPB Formula</span>
               <strong id="selectedFormula">-</strong>
             </div>
+
             <div class="result-item highlight">
               <span>HPB</span>
               <strong id="result">-</strong>
+            </div>
+
+            <div class="result-item">
+              <span>Royalty Rate</span>
+              <strong id="royaltyRateResult">-</strong>
+            </div>
+
+            <div class="result-item highlight">
+              <span>Royalty Value</span>
+              <strong id="royaltyValueResult">-</strong>
             </div>
           </div>
 
           <div class="result-card">
             <h3>Selling Price</h3>
+
             <div class="result-item">
               <span>Pricing Mode</span>
               <strong id="pricingModeResult">-</strong>
             </div>
+
             <div class="result-item">
               <span>Typical Contract GCV</span>
               <strong id="typicalContractGcvResult">-</strong>
             </div>
+
             <div class="result-item formula-box">
               <span>Base Price Formula</span>
               <strong id="basePriceFormula">-</strong>
             </div>
+
             <div class="result-item">
               <span>Base Price</span>
               <strong id="basePriceResult">-</strong>
             </div>
+
             <div class="result-item formula-box">
               <span>Adj Price Formula</span>
               <strong id="adjPriceFormula">-</strong>
             </div>
+
             <div class="result-item highlight">
               <span>Adj Price</span>
               <strong id="adjPriceResult">-</strong>
@@ -322,11 +470,10 @@
     </main>
   </div>
 
-  <!-- Print/PDF layout -->
   <div id="pdfReport" class="print-only">
     <div class="pdf-page">
       <div class="pdf-header">
-        <h1>Coal HPB & Selling Price Calculation Result</h1>
+        <h1>Coal HPB, Price & Royalty Calculation Result</h1>
         <p id="pdfTimestamp">-</p>
       </div>
 
@@ -341,10 +488,13 @@
       </div>
 
       <div class="pdf-section">
-        <h2>HPB Result</h2>
+        <h2>HPB & Royalty Result</h2>
         <table class="pdf-table">
+          <tr><td>HBA Reference Period</td><td id="pdfHbaPeriod">-</td></tr>
           <tr><td>Selected HPB Formula</td><td id="pdfSelectedFormula">-</td></tr>
           <tr><td>HPB</td><td id="pdfHpb">-</td></tr>
+          <tr><td>Royalty Rate</td><td id="pdfRoyaltyRate">-</td></tr>
+          <tr><td>Royalty Value</td><td id="pdfRoyaltyValue">-</td></tr>
         </table>
       </div>
 
