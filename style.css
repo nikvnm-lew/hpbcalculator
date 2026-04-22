@@ -135,6 +135,10 @@ body {
   gap: 6px;
 }
 
+.field-half {
+  grid-column: span 1;
+}
+
 .field label {
   font-size: 13px;
   font-weight: 700;
@@ -179,7 +183,7 @@ select:focus {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 .section-block {
@@ -468,6 +472,10 @@ select:focus {
     grid-template-columns: 1fr;
   }
 
+  .field-half {
+    grid-column: 1 / -1;
+  }
+
   .action-row {
     justify-content: stretch;
     flex-direction: column;
@@ -509,4 +517,6 @@ select:focus {
     size: A4;
     margin: 16mm;
   }
+}.hba-reference-block .minerba-status-card {
+  margin-top: 10px;
 }

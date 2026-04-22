@@ -27,7 +27,7 @@
         </div>
         <div class="guide-step">
           <strong>2</strong>
-          <span>Set HBA reference and apply it to calculator</span>
+          <span>Set HBA reference</span>
         </div>
         <div class="guide-step">
           <strong>3</strong>
@@ -50,7 +50,7 @@
         <div class="form-grid">
           <div class="field">
             <label for="gcv">GCV (ARB)</label>
-            <input id="gcv" type="number" step="any" placeholder="e.g. 5600 actual cargo GCV" oninput="updateHpbInputSection()" />
+            <input id="gcv" type="number" step="any" placeholder="e.g. 5600 actual cargo GCV" />
           </div>
 
           <div class="field">
@@ -80,13 +80,13 @@
           <div class="form-grid">
             <div class="field">
               <label for="hbaReferenceMode">Reference Mode</label>
-              <select id="hbaReferenceMode" onchange="toggleHbaReferenceMode()">
+              <select id="hbaReferenceMode">
                 <option value="MANUAL">Manual Input</option>
                 <option value="AUTO">Auto / Minerba</option>
               </select>
             </div>
 
-            <div class="field">
+            <div class="field" id="applyReferenceWrap">
               <label>&nbsp;</label>
               <button class="secondary-btn" type="button" onclick="applyManualReferenceToCalculator()">
                 Apply Reference to Calculator
@@ -97,18 +97,18 @@
           <div class="minerba-status-card">
             <div class="minerba-status-top">
               <span class="mini-label">Source Status</span>
-              <strong id="minerbaStatus">Not loaded</strong>
+              <strong id="minerbaStatus">Manual mode</strong>
             </div>
             <span class="mini-label" id="latestHbaPeriodDisplay">Period: -</span>
           </div>
 
-          <div id="autoReferenceActions" class="reference-actions">
+          <div id="autoReferenceActions" class="reference-actions hidden">
             <button class="secondary-btn" type="button" onclick="fetchHBAFromMinerba()">
               Auto Fill HBA from Minerba
             </button>
           </div>
 
-          <div id="manualReferenceSection" class="manual-reference hidden">
+          <div id="manualReferenceSection" class="manual-reference">
             <div class="form-grid">
               <div class="field full-width">
                 <label for="manualHbaPeriod">Manual Period</label>
@@ -142,13 +142,13 @@
       <section class="panel">
         <div class="panel-header">
           <h2>2. HPB & Royalty Setup</h2>
-          <p>HBA 0 is used for royalty rate. Applied HBA depends on GCV and HPB mode.</p>
+          <p>Royalty rate uses HBA reference. Applied HBA depends on GCV and HPB mode.</p>
         </div>
 
         <div class="form-grid">
           <div class="field full-width">
             <label for="hpbMode">HPB Mode</label>
-            <select id="hpbMode" onchange="updateHpbInputSection()">
+            <select id="hpbMode">
               <option value="NORMAL">Normal (Based on GCV)</option>
               <option value="CAP70">CAP 70</option>
               <option value="CAP90">CAP 90</option>
@@ -182,12 +182,7 @@
             </div>
           </div>
 
-          <div class="field">
-            <label for="hba0Value">HBA 0 (USD)</label>
-            <input id="hba0Value" type="number" step="any" placeholder="Used for royalty rate" />
-          </div>
-
-          <div class="field">
+          <div class="field field-half">
             <label for="permitType">Mining Permit Type</label>
             <select id="permitType">
               <option value="IUPK">IUPK</option>
@@ -195,12 +190,12 @@
             </select>
           </div>
 
-          <div class="field full-width">
+          <div class="field field-half">
             <label for="transhipmentFreight">Transhipment & Freight (USD)</label>
             <input id="transhipmentFreight" type="number" step="any" value="6.5" />
           </div>
 
-          <div id="hpbNormalSection" class="hidden full-width">
+          <div id="hpbNormalSection" class="full-width">
             <div class="field">
               <label id="normalHbaLabel" for="normalHbaValue">HBA</label>
               <input id="normalHbaValue" type="number" step="any" placeholder="Enter applied HBA value (USD)" />
@@ -232,7 +227,7 @@
         <div class="form-grid">
           <div class="field">
             <label for="pricingType">Pricing Type</label>
-            <select id="pricingType" onchange="togglePricingSections()">
+            <select id="pricingType">
               <option value="SINGLE_INDEX">Single Index</option>
               <option value="BLENDED_2_INDEX">Blended 2 Index</option>
               <option value="FIXED_PRICE">Fixed Price</option>
@@ -254,7 +249,7 @@
           <div class="form-grid">
             <div class="field">
               <label for="singleIndexName">Index</label>
-              <select id="singleIndexName" onchange="updateSingleIndexLabel()">
+              <select id="singleIndexName">
                 <option value="NEWC">NEWC</option>
                 <option value="ICI1">ICI 1</option>
                 <option value="ICI2">ICI 2</option>
@@ -322,7 +317,7 @@
 
                 <div class="field">
                   <label for="leg1Index">Index</label>
-                  <select id="leg1Index" onchange="updateBlendedIndexLabels()">
+                  <select id="leg1Index">
                     <option value="ICI2">ICI 2</option>
                     <option value="ICI3">ICI 3</option>
                     <option value="NEWC">NEWC</option>
@@ -365,7 +360,7 @@
 
                 <div class="field">
                   <label for="leg2Index">Index</label>
-                  <select id="leg2Index" onchange="updateBlendedIndexLabels()">
+                  <select id="leg2Index">
                     <option value="ICI3">ICI 3</option>
                     <option value="ICI2">ICI 2</option>
                     <option value="NEWC">NEWC</option>
