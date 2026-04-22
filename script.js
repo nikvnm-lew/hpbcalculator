@@ -138,15 +138,15 @@ function updateHpbInputSection() {
 
   if (hpbMode === "CAP70") {
     cap70Section.classList.remove("hidden");
-    detectedRule.innerText = "HPB_CAP 70";
+    detectedRule.innerText = "HBA CAP 70";
   } else if (hpbMode === "CAP90") {
     cap90Section.classList.remove("hidden");
-    detectedRule.innerText = "HPB_CAP 90";
+    detectedRule.innerText = "HBA CAP 90";
   } else {
     const rule = detectNormalHbaRule(gcv);
     normalSection.classList.remove("hidden");
     normalHbaLabel.innerText = rule.label;
-    detectedRule.innerText = `${rule.formula} (${rule.label})`;
+    detectedRule.innerText = rule.label;
   }
 }
 
@@ -378,7 +378,7 @@ function calculate() {
     } else if (rule.formula === "HPB_4100") {
       hpb = price4100(normalHbaValue);
       selectedFormula = "HPB_4100 (HBA II)";
-    } else if (rule.formula === "Price_3400") {
+    } else if (rule.formula === "HPB_3400") {
       hpb = price3400(normalHbaValue);
       selectedFormula = "HPB_3400 (HBA III)";
     } else {

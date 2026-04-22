@@ -15,17 +15,42 @@
       </p>
     </header>
 
+    <section class="quick-guide panel panel-wide">
+      <div class="panel-header">
+        <h2>How to Use</h2>
+        <p>Recommended input order for faster and safer calculation</p>
+      </div>
+      <div class="quick-guide-grid">
+        <div class="guide-step">
+          <strong>1</strong>
+          <span>Fill actual coal quality first</span>
+        </div>
+        <div class="guide-step">
+          <strong>2</strong>
+          <span>Set HBA reference and apply it to calculator</span>
+        </div>
+        <div class="guide-step">
+          <strong>3</strong>
+          <span>Choose HPB mode and permit type</span>
+        </div>
+        <div class="guide-step">
+          <strong>4</strong>
+          <span>Choose pricing type and fill selling price inputs</span>
+        </div>
+      </div>
+    </section>
+
     <main class="layout-grid">
       <section class="panel quality-panel">
         <div class="panel-header">
           <h2>1. Coal Quality</h2>
-          <p>Input actual cargo quality (ARB basis)</p>
+          <p>Start here. Input actual cargo quality (ARB basis).</p>
         </div>
 
         <div class="form-grid">
           <div class="field">
             <label for="gcv">GCV (ARB)</label>
-            <input id="gcv" type="number" step="any" placeholder="e.g. 5600" oninput="updateHpbInputSection()" />
+            <input id="gcv" type="number" step="any" placeholder="e.g. 5600 actual cargo GCV" oninput="updateHpbInputSection()" />
           </div>
 
           <div class="field">
@@ -48,7 +73,7 @@
           <div class="section-mini-header">
             <div>
               <h3>HBA Reference</h3>
-              <p>Latest HBA values for reference</p>
+              <p>Fill HBA reference before calculating HPB and royalty.</p>
             </div>
           </div>
 
@@ -57,7 +82,7 @@
               <label for="hbaReferenceMode">Reference Mode</label>
               <select id="hbaReferenceMode" onchange="toggleHbaReferenceMode()">
                 <option value="MANUAL">Manual Input</option>
-                <option value="AUTO">Auto / Minerba</option>                
+                <option value="AUTO">Auto / Minerba</option>
               </select>
             </div>
 
@@ -117,7 +142,7 @@
       <section class="panel">
         <div class="panel-header">
           <h2>2. HPB & Royalty Setup</h2>
-          <p>HBA input adjusts based on GCV & selected mode</p>
+          <p>HBA 0 is used for royalty rate. Applied HBA depends on GCV and HPB mode.</p>
         </div>
 
         <div class="form-grid">
@@ -131,7 +156,7 @@
           </div>
 
           <div class="info-card full-width">
-            <span class="info-label">Applied Formula</span>
+            <span class="info-label">Applied HBA</span>
             <strong id="detectedHpbRule">-</strong>
           </div>
 
@@ -159,12 +184,12 @@
 
           <div class="field">
             <label for="hba0Value">HBA 0 (USD)</label>
-            <input id="hba0Value" type="number" step="any" placeholder="Enter HBA 0 value" />
+            <input id="hba0Value" type="number" step="any" placeholder="Used for royalty rate" />
           </div>
 
           <div class="field">
             <label for="permitType">Mining Permit Type</label>
-            <select id="permitType">              
+            <select id="permitType">
               <option value="IUPK">IUPK</option>
               <option value="IUP_OP">IUP OP</option>
             </select>
@@ -178,7 +203,7 @@
           <div id="hpbNormalSection" class="hidden full-width">
             <div class="field">
               <label id="normalHbaLabel" for="normalHbaValue">HBA</label>
-              <input id="normalHbaValue" type="number" step="any" placeholder="Enter HBA value (USD)" />
+              <input id="normalHbaValue" type="number" step="any" placeholder="Enter applied HBA value (USD)" />
             </div>
           </div>
 
@@ -201,7 +226,7 @@
       <section class="panel panel-wide">
         <div class="panel-header">
           <h2>3. Selling Price</h2>
-          <p>Select pricing structure and input index values</p>
+          <p>Choose one pricing type only: Single Index, Blended 2 Index, or Fixed Price.</p>
         </div>
 
         <div class="form-grid">
@@ -216,7 +241,7 @@
 
           <div class="field">
             <label for="contractGcv">Typical Contract GCV (GAR)</label>
-            <input id="contractGcv" type="number" step="any" placeholder="e.g. 5600" />
+            <input id="contractGcv" type="number" step="any" placeholder="e.g. 5600 as per contract" />
           </div>
         </div>
 
